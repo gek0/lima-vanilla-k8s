@@ -5,8 +5,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 nodeIP=$(echo $(hostname -I | tr "." "-"))
 nodeIPclean=$(hostname -I)
 k8sMajorVersion="1.37"
-podNetworkCIDR="10.244.0.0/16"
-flannelSubnetCIDR="10.244.0.1/24"
 
 # Set hostname and prompt
 sudo hostnamectl set-hostname "worker-node-$nodeIP"
@@ -56,16 +54,6 @@ curl -fsSL https://pkgs.k8s.io/core:/stable:/v${k8sMajorVersion}/deb/Release.key
 sudo apt-get update
 sudo apt install -y kubelet kubeadm kubectl net-tools
 sudo apt-mark hold kubelet kubeadm kubectl
-
-# prepare for Flannel CNI
-sudo mkdir -p /run/flannel
-sudo tee /run/flannel/subnet.env <<EOF
-FLANNEL_NETWORK=${podNetworkCIDR}
-FLANNEL_SUBNET=${flannelSubnetCIDR}
-FLANNEL_MTU=1450
-FLANNEL_IPMASQ=true
-EOF
-sudo systemctl restart kubelet
 
 # Allow standard SSH access from host
 chmod +x "$SCRIPT_DIR/host-ssh-standard-access.sh"

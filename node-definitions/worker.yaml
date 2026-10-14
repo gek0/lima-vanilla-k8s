@@ -7,10 +7,12 @@ memory: "4GiB"
 disk: "20GiB"
 
 mounts:
-  - location: "~/Documents/projects/_local_/k8s_the_hard_way/lima-node-definitions/scripts"
+  - location: "{{.Home}}/Documents/projects/_local_/lima-vanilla-k8s"
     writable: true
-  - location: "~/.ssh"
+    mountPoint: "/mnt/lima-vanilla-k8s"
+  - location: "{{.Home}}/.ssh"
     writable: false
+    mountPoint: "/mnt/ssh"
 
 networks:
    - lima: user-v2
@@ -28,6 +30,6 @@ provision:
       #!/bin/bash
       set -eux -o pipefail
       export DEBIAN_FRONTEND=noninteractive
-      export HOST_PATH="/Users/matija_burisa/Documents/projects/_local_/k8s_the_hard_way"
-      chmod +x $HOST_PATH/lima-node-definitions/scripts/worker-provision.sh
-      bash $HOST_PATH/lima-node-definitions/scripts/worker-provision.sh
+      export HOST_PATH="/mnt/lima-vanilla-k8s"
+      chmod +x $HOST_PATH/node-definitions/scripts/worker-provision.sh
+      bash $HOST_PATH/node-definitions/scripts/worker-provision.sh

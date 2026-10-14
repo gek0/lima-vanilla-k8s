@@ -46,4 +46,4 @@ EOF
 echo -e "k8s resources created and kube-config generated. run: 'converge-kube-config.sh' script locally\n"
 
 kubeadm token create --print-join-command
-echo "join worker nodes using the command above ^"
+echo "join any future worker nodes using the command above ^^"

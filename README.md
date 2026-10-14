@@ -14,6 +14,8 @@
 
 ## Scripts and configuration part
 - connect to **master-node** using `limactl shell master-1`
+  - copy the node command give on the console
+- connect to **worker-nodes[*]** using `limactl shell worker-X` command and paste/apply the command from previous step
 - run `sudo -i` and inside /root/k8s/ directory run `./create-cluster-admin.sh`
   - this will configure Admin user for cluster and install all needed components
     - Calico CNI

@@ -30,7 +30,12 @@ kubectl get configmap kube-proxy -n kube-system -o yaml | \
 sed -e "s/strictARP: false/strictARP: true/" | \
 kubectl apply -f - -n kube-system
 
+
+kubectl apply -f ${componentsDir}/metallb/crds.yaml --server-side
 kubectl apply -f ${componentsDir}/metallb/metallb-native.yaml
+echo "...lets wait a bit for metallb-controller to be ready..."
+sleep 20
+kubectl apply -f ${componentsDir}/metallb/webhook.yaml
 kubectl apply -f ${componentsDir}/metallb/configuration.yaml
 
-echo -e "\nall k8s components installed and ready"
+echo -e "\nAll k8s components installed and ready!"
