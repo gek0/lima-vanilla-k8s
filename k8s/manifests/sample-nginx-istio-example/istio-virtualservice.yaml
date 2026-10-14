@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: sample-app-virtualservice
+  namespace: sample-app
+spec:
+  hosts:
+    - "sample-app.local.io"
+  gateways:
+    - istio-system/primary-gateway
+  http:
+    - route:
+        - destination:
+            host: sample-app.sample-app.svc.cluster.local
+            port:
+              number: 80
