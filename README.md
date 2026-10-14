@@ -1,5 +1,5 @@
 # Vanilla K8s in Lima-VM
-![vag](https://github.com/gek0/vagrant-vanilla-k8s/assets/8794964/187cf698-ebfb-4dec-8d09-3582fb0ca795)
+![Lima-VM and Kubernetes](https://i.imgur.com/V2afcyF.png)
 
 - latest K8s install (v1.37 at the time) using containerd runtime on Lima-VM nodes (adapted for MacOS)!
 - this is a refreshed upgrade from [vagrant-vanilla-k8s](https://github.com/gek0/vagrant-vanilla-k8s) repository
