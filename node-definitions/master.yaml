@@ -4,13 +4,13 @@ images:
 
 cpus: 2
 memory: "4GiB"
-disk: "10GiB"
+disk: "20GiB"
 
 mounts:
-  - location: "{{.Home}}/Documents/projects/_local_/lima-vanilla-k8s"
+  - location: "~/Documents/projects/_local_/lima-vanilla-k8s"
     writable: true
     mountPoint: "/mnt/lima-vanilla-k8s"
-  - location: "{{.Home}}/.ssh"
+  - location: "~/.ssh"
     writable: false
     mountPoint: "/mnt/ssh"
 
@@ -27,7 +27,7 @@ dns:
 provision:
   - mode: system
     script: |
-      #!/bin/bash
+      #!/usr/bin/env bash
       set -eux -o pipefail
       export DEBIAN_FRONTEND=noninteractive
       export HOST_PATH="/mnt/lima-vanilla-k8s"

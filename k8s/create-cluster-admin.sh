@@ -13,8 +13,7 @@ kubectl apply -f ./mb-cluster-admin-sa.yaml
 kubectl apply -f ./mb-cluster-admin-rbac.yaml
 kubectl apply -f ./mb-cluster-admin-secret.yaml
 
-echo -e "\nPress enter to continue with the setup..."
-read
+echo -e "\nNow configuring cluster admin configuration..."
 
 export USER_TOKEN_VALUE=$(kubectl -n $DEFAULT_NAMESPACE get secret "${SERVICE_ACCOUNT}-token-secret" -o=go-template='{{.data.token}}' | base64 --decode)
 export CURRENT_CONTEXT=$(kubectl config current-context)

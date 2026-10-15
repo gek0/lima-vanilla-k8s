@@ -36,4 +36,12 @@ sleep 20
 kubectl apply -f ${componentsDir}/metallb/webhook.yaml
 kubectl apply -f ${componentsDir}/metallb/configuration.yaml
 
+## Install monitoring stack
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install loki grafana/loki-stack -n monitoring --create-namespace --set promtail.enabled=true
+kubectl create secret generic monitoring-grafana -n monitoring --from-literal=admin-user=admin --from-literal=admin-password=admin
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f ${componentsDir}/monitoring/kube-prometheus-stack-values.yaml
+
 echo -e "\nAll k8s components installed and ready!"
