@@ -10,7 +10,6 @@ sudo tee $MOTD_FILE > /dev/null <<EOF
 #          ----- Welcome to k8s Master node -----           #
 #                                                           #
 #############################################################
-#############################################################
 #  Run this on your nodes to join them to the cluster       #
 #  and add "--control-plane" for Master nodes!              #
 #############################################################
