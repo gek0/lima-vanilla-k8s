@@ -64,6 +64,7 @@ All user-facing services are exposed via MetalLB from the pool `192.168.104.50-7
 | [ArgoCD](https://argo-cd.readthedocs.io)               | http://192.168.104.52         | admin / run `patch-argocd-service.sh` to print initial password  |
 | [Vault](https://www.vaultproject.io)                   | http://192.168.104.53:8200    | See `k8s/manifests/hashicorp-vault/README.md`                    |
 | [Grafana](https://grafana.com)                         | http://192.168.104.54         | admin / admin — Prometheus & Loki datasources pre-configured     |
+| Vault webapp example                                   | http://192.168.104.55         | demo app — reads secrets from Vault via k8s SA auth              |
 
 Prometheus and Alertmanager are ClusterIP only — accessible through Grafana or via `kubectl port-forward`.
 
