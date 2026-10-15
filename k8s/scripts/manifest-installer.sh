@@ -28,9 +28,9 @@ info "Available services:"
 echo
 
 PS3=$'\n> '
-select service in "${services[@]}" "Quit"
+select service in "${services[@]}" "exit"
 do
-  [[ "$service" == "Quit" ]] && info "Exiting" && exit 0
+  [[ "$service" == "exit" ]] && info "Exiting" && exit 0
   [[ -n "$service" ]] && break
   warn "Invalid selection — try again"
 done
