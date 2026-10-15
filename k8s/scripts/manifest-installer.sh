@@ -60,6 +60,13 @@ then
   exit 0
 fi
 
+# Run setup-requirements-service.sh before applying manifests if present
+if [[ -f "${SERVICE_DIR}/setup-requirements-service.sh" ]]
+then
+  section "Setting up requirements for ${service}"
+  bash "${SERVICE_DIR}/setup-requirements-service.sh"
+fi
+
 section "Installing ${service}"
 
 # namespace.yaml always first

@@ -34,7 +34,7 @@
 ## K8s part
 - use manifests in `k8s/manifests` directory per your liking, everything provided as learning examples
 - run `k8s/scripts/manifest-installer.sh` on master for an interactive menu to install any service from `k8s/manifests/`
-  - applies `namespace.yaml` first, then all other manifests, then runs `patch-service.sh` if present
+  - runs `setup-requirements-service.sh` first if present (Helm installs, pre-requisites), then applies manifests, then `patch-service.sh`
   - pass `--delete` to remove all resources for a selected service instead: `./scripts/manifest-installer.sh --delete`
   - services behind a MetalLB LoadBalancer IP are accessible from your Mac via `./port-forward.sh` — the patch script prints the exact command
 
@@ -44,10 +44,11 @@ Create a subdirectory under `k8s/manifests/<service-name>/` with your manifests.
 
 | File | Purpose |
 |---|---|
-| `namespace.yaml` | Applied first before anything else |
+| `setup-requirements-service.sh` | Run first — Helm installs, repo adds, any prerequisites before manifests are applied |
+| `namespace.yaml` | Applied second, before all other manifests |
 | `*.yaml` | Applied in alphabetical order after namespace |
-| `patch-service.sh` | Run after apply — use for LoadBalancer service patching, password retrieval, etc. |
-| `wait-for` | One `<resource-type>/<name> <namespace>` per line — installer waits for each to be ready before running `patch-service.sh`. Falls back to a 15s sleep if absent. |
+| `wait-for` | One `<resource-type>/<name> <namespace>` per line — installer polls each before running `patch-service.sh`. Falls back to 15s sleep if absent. |
+| `patch-service.sh` | Run last — LoadBalancer patching, init sequences, password retrieval, etc. |
 
 Example `wait-for`:
 ```
@@ -60,7 +61,6 @@ All user-facing services are exposed via MetalLB from the pool `192.168.104.50-7
 
 | Component                                              | Address                       | Credentials / Notes                                              |
 |--------------------------------------------------------|-------------------------------|------------------------------------------------------------------|
-| [Istio Ingress Gateway](https://istio.io)              | http://192.168.104.50         | Routes `*.local.io` hosts — wire via VirtualService              |
 | [ArgoCD](https://argo-cd.readthedocs.io)               | http://192.168.104.52         | admin / run `patch-argocd-service.sh` to print initial password  |
 | [Vault](https://www.vaultproject.io)                   | http://192.168.104.53:8200    | See `k8s/manifests/hashicorp-vault/README.md`                    |
 | [Grafana](https://grafana.com)                         | http://192.168.104.54         | admin / admin — Prometheus & Loki datasources pre-configured     |

@@ -4,15 +4,6 @@ kind: Namespace
 metadata:
   name: vault
 ---
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: k8s.io/hostpath
-volumeBindingMode: WaitForFirstConsumer
----
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
@@ -30,7 +21,6 @@ spec:
             port:
               number: 8200
 ---
----
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -38,7 +28,7 @@ metadata:
   labels:
     type: local
 spec:
-  storageClassName: local-storage
+  storageClassName: local-path
   capacity:
     storage: 2Gi
   accessModes:
@@ -54,17 +44,18 @@ spec:
           values:
           - worker-node-192-168-104-3
 ---
- kind: PersistentVolumeClaim
- apiVersion: v1
- metadata:
-   name: data-vault-0
- spec:
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 1Gi
-    volumeName: pv-data-vault-0
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: data-vault-0
+  namespace: vault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: pv-data-vault-0
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -73,7 +64,7 @@ metadata:
   labels:
     type: local
 spec:
-  storageClassName: local-storage
+  storageClassName: local-path
   capacity:
     storage: 2Gi
   accessModes:
@@ -89,17 +80,18 @@ spec:
           values:
           - worker-node-192-168-104-4
 ---
- kind: PersistentVolumeClaim
- apiVersion: v1
- metadata:
-   name: data-vault-1
- spec:
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 1Gi
-    volumeName: pv-data-vault-1
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: data-vault-1
+  namespace: vault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: pv-data-vault-1
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -108,7 +100,7 @@ metadata:
   labels:
     type: local
 spec:
-  storageClassName: local-storage
+  storageClassName: local-path
   capacity:
     storage: 2Gi
   accessModes:
@@ -124,14 +116,15 @@ spec:
           values:
           - worker-node-192-168-104-5
 ---
- kind: PersistentVolumeClaim
- apiVersion: v1
- metadata:
-   name: data-vault-2
- spec:
-    accessModes:
-      - ReadWriteOnce
-    resources:
-      requests:
-        storage: 1Gi
-    volumeName: pv-data-vault-2
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: data-vault-2
+  namespace: vault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: pv-data-vault-2
