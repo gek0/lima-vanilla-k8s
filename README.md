@@ -33,7 +33,27 @@
 
 ## K8s part
 - use manifests in `k8s/manifests` directory per your liking, everything provided as learning examples
+- run `k8s/scripts/manifest-installer.sh` on master for an interactive menu to install any service from `k8s/manifests/`
+  - applies `namespace.yaml` first, then all other manifests, then runs `patch-service.sh` if present
+  - pass `--delete` to remove all resources for a selected service instead: `./scripts/manifest-installer.sh --delete`
+  - services behind a MetalLB LoadBalancer IP are accessible from your Mac via `./port-forward.sh` — the patch script prints the exact command
 
+### Adding a new service
+
+Create a subdirectory under `k8s/manifests/<service-name>/` with your manifests. The installer picks it up automatically. Conventions:
+
+| File | Purpose |
+|---|---|
+| `namespace.yaml` | Applied first before anything else |
+| `*.yaml` | Applied in alphabetical order after namespace |
+| `patch-service.sh` | Run after apply — use for LoadBalancer service patching, password retrieval, etc. |
+| `wait-for` | One `<resource-type>/<name> <namespace>` per line — installer waits for each to be ready before running `patch-service.sh`. Falls back to a 15s sleep if absent. |
+
+Example `wait-for`:
+```
+deployment/my-service my-namespace
+statefulset/my-db my-namespace
+```
 ## Exposed Services
 
 All user-facing services are exposed via MetalLB from the pool `192.168.104.50-70`:

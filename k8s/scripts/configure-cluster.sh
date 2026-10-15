@@ -34,7 +34,8 @@ EOF
 }
 
 section "Installing k8s components"
-if [[ "$1" == "--skip-install" ]]; then
+if [[ "$1" == "--skip-install" ]]
+then
   warn "Skipping component installation (--skip-install passed)"
 else
   "${SCRIPT_DIR}/install-k8s-components.sh"

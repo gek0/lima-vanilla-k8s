@@ -8,7 +8,8 @@ READER_CONFIG="${COMPONENTS_DIR}/cluster-reader-config.yaml"
 
 section "Kubeconfig Merge"
 
-if cp ~/.kube/config ~/.kube/config-backup 2>/dev/null; then
+if cp ~/.kube/config ~/.kube/config-backup 2>/dev/null
+then
   ok "Existing kubeconfig backed up to ~/.kube/config-backup"
 else
   warn "No existing kubeconfig found, skipping backup"
@@ -22,7 +23,8 @@ section "Merging Configurations"
 
 KUBECONFIG_PARTS="${HOME}/.kube/config:${ADMIN_CONFIG}"
 
-if [[ -f "${READER_CONFIG}" ]]; then
+if [[ -f "${READER_CONFIG}" ]]
+then
   KUBECONFIG_PARTS="${KUBECONFIG_PARTS}:${READER_CONFIG}"
   info "Merging admin and reader contexts ..."
 else
