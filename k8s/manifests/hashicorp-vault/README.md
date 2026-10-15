@@ -5,7 +5,7 @@ Vault HA Raft setup + example webapp that reads secrets from it.
 
 ## Working with Vault secrets
 
-After the installation is completed safely store "Root token" and use if in further steps!
+After the installation is completed "Root token" can be found in `cluster-keys.json` file and used in further steps!
 
 Exec into vault-0 and log in with the root token from `cluster-keys.json`:
 ```
