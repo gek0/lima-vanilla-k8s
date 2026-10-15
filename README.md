@@ -16,15 +16,16 @@
 - connect to **master-node** using `limactl shell master-1`
   - copy the node command give on the console
 - connect to **worker-nodes[*]** using `limactl shell worker-X` command and paste/apply the command from previous step
-- run `sudo -i` and inside /root/k8s/ directory run `./create-cluster-admin.sh`
-  - this will configure Admin user for cluster and install all needed components
+- run `sudo -i` and inside /root/k8s/ directory run `./scripts/configure-cluster.sh`
+  - this will configure Admin user for cluster, install all needed components, and merge the kubeconfig locally:
     - Calico CNI
     - Metrics Server
     - Istio ingress + istioctl
     - MetalLB (L2 mode, IP pool `192.168.104.50-70`)
     - Local Path Provisioner (dynamic PV provisioning via node local filesystem)
     - Monitoring stack (Prometheus, Grafana, Loki + Promtail, Alertmanager)
-- [OPTIONAL]: if you'd like to manage the cluster from host using your tools run `./converge-kube-config.sh` to update local ./kube/config file
+  - at the end it calls `scripts/converge-kube-config.sh` automatically to merge the cluster admin kubeconfig into `~/.kube/config`
+- [OPTIONAL]: re-run `k8s/scripts/converge-kube-config.sh` standalone at any time to re-merge the kubeconfig
   - `k9s` and `kubectl` are also installed in **master-node** so cluster can be configured from there directly
 - join worker Nodes using the token provided with first script
 

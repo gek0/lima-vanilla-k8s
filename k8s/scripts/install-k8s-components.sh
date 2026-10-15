@@ -4,7 +4,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 componentsDir="/root/k8s/components"
 
-section "K8s Component Installation"
+section "k8s component installation"
 info "Components directory: $componentsDir"
 
 ## Calico CNI

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e -o pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/k8s/lib.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/k8s/scripts/lib.sh"
 
 if [[ -z "$1" ]]; then
   echo "Usage: $0 <host_port:service_port/protocol>"
