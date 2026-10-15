@@ -17,11 +17,11 @@ current-context: ${context_name}
 contexts:
 - name: ${context_name}
   context:
-    cluster: ${CURRENT_CONTEXT}
+    cluster: ${CURRENT_CLUSTER}
     user: ${user_name}
     namespace: ${DEFAULT_NAMESPACE}
 clusters:
-- name: ${CURRENT_CONTEXT}
+- name: ${CURRENT_CLUSTER}
   cluster:
     certificate-authority-data: ${CLUSTER_CA}
     server: ${CLUSTER_SERVER}
@@ -42,12 +42,8 @@ fi
 
 # Apply cluster-access service accounts, RBAC and token secrets (admin + reader)
 section "Creating cluster access"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-admin-sa.yaml"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-admin-rbac.yaml"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-admin-secret.yaml"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-reader-sa.yaml"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-reader-rbac.yaml"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-reader-secret.yaml"
+kubectl apply -f "${MANIFESTS_DIR}/cluster-admin.yaml"
+kubectl apply -f "${MANIFESTS_DIR}/cluster-reader.yaml"
 ok "Cluster access resources applied"
 
 section "Generating kubeconfigs"
@@ -58,10 +54,10 @@ CLUSTER_CA=$(kubectl config view --raw -o=go-template='{{range .clusters}}{{if e
 CLUSTER_SERVER=$(kubectl config view --raw -o=go-template='{{range .clusters}}{{if eq .name "'''${CURRENT_CLUSTER}'''"}}{{ .cluster.server }}{{end}}{{ end }}')
 
 ADMIN_TOKEN=$(kubectl -n ${DEFAULT_NAMESPACE} get secret cluster-admin-token-secret -o=go-template='{{.data.token}}' | base64 --decode)
-write_kubeconfig "${CURRENT_CONTEXT}" "cluster-admin-sa" "${ADMIN_TOKEN}" "${MANIFESTS_DIR}/cluster-admin-config.yaml"
+write_kubeconfig "k8s-admin" "cluster-admin" "${ADMIN_TOKEN}" "${MANIFESTS_DIR}/cluster-admin-config.yaml"
 
 READER_TOKEN=$(kubectl -n ${DEFAULT_NAMESPACE} get secret cluster-reader-token-secret -o=go-template='{{.data.token}}' | base64 --decode)
-write_kubeconfig "${CURRENT_CONTEXT}-reader" "cluster-reader" "${READER_TOKEN}" "${MANIFESTS_DIR}/cluster-reader-config.yaml"
+write_kubeconfig "k8s-reader" "cluster-reader" "${READER_TOKEN}" "${MANIFESTS_DIR}/cluster-reader-config.yaml"
 
 section "Worker node join command"
 kubeadm token create --print-join-command

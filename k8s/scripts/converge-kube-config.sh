@@ -37,3 +37,6 @@ echo
 ok "Kubeconfig merged and saved to ~/.kube/config"
 info "Available contexts:"
 kubectl config get-contexts
+echo
+info "Switch context with: kubectx <context-name>"
+info "Switch namespace with: kubens <namespace>"

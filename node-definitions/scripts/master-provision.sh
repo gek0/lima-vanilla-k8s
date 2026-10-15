@@ -10,7 +10,16 @@ podNetworkCIDR="10.244.0.0/16"
 # Set hostname and prompt
 sudo hostnamectl set-hostname "master-node-$nodeIP"
 echo "master-node-$nodeIP" | sudo tee /etc/hostname
-echo "export PS1=\"\[\e[1;35m\]\u\[\033[m\]@\[\e[1;92m\]master-node-$nodeIP\[\033[m\]:\w \$ \"" >> ~/.bashrc
+cat >> ~/.bashrc << 'BASHRC'
+
+kube_ctx() {
+  local ctx ns
+  ctx=$(kubectl config current-context 2>/dev/null) || return
+  ns=$(kubectl config view --minify -o jsonpath='{..namespace}' 2>/dev/null)
+  echo "(${ctx}:${ns:-default})"
+}
+BASHRC
+echo "export PS1=\"\[\e[1;35m\]\u\[\033[m\]@\[\e[1;92m\]master-node-$nodeIP\[\033[m\]:\w \[\e[0;36m\]\\\$(kube_ctx)\[\033[m\] \$ \"" >> ~/.bashrc
 
 # Disable swap
 sudo swapoff -a
@@ -91,5 +100,12 @@ echo -e 'alias ku="kubectl"\ncomplete -F __start_kubectl ku' >> ~/.bashrc
 cd /tmp
 curl -Lo k9s_linux_arm64.deb https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_linux_arm64.deb
 sudo dpkg -i k9s_linux_arm64.deb
+
+# Install kubectx and kubens
+curl -Lso kubectx.tar.gz https://github.com/ahmetb/kubectx/releases/download/v0.11.0/kubectx_v0.11.0_linux_arm64.tar.gz
+curl -Lso kubens.tar.gz https://github.com/ahmetb/kubectx/releases/download/v0.11.0/kubens_v0.11.0_linux_arm64.tar.gz
+tar -xzf kubectx.tar.gz kubectx && sudo mv kubectx /usr/local/bin/
+tar -xzf kubens.tar.gz kubens   && sudo mv kubens  /usr/local/bin/
+rm -f kubectx.tar.gz kubens.tar.gz
 
 echo "I'm ready and installed!"
