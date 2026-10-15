@@ -1,47 +1,98 @@
 #!/usr/bin/env bash
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 componentsDir="/root/k8s/components"
 
-## install Calico as CNI
-kubectl apply -f ${componentsDir}/calico/calico.yaml
+section "K8s Component Installation"
+info "Components directory: $componentsDir"
 
-## install Metrics Server - for HPA and VPA components
+## Calico CNI
+section "Calico CNI"
+info "Installing Calico as the cluster CNI ..."
+kubectl apply -f ${componentsDir}/calico/calico.yaml
+ok "Calico applied"
+
+## Metrics Server
+section "Metrics Server"
+info "Installing Metrics Server ..."
 kubectl apply -f ${componentsDir}/metrics-server/components.yaml
-# patch for self-signed certificates and tolerations for master/control-plane nodes
+info "Patching for self-signed certificates and control-plane tolerations ..."
 kubectl patch deployment metrics-server -n kube-system \
   --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"}]'
+ok "Metrics Server applied and patched"
 
-## install istioctl and Istio ingress
-echo "...lets wait a bit for metrics-server to be ready..."
+## Istio
+section "Istio Service Mesh"
+warn "Waiting 15s for Metrics Server to become ready ..."
 sleep 15
+
+info "Downloading Istio installer ..."
 cd /opt
 curl -sL https://istio.io/downloadIstio | sh -
+
 istioDir=$(find /opt -maxdepth 1 -name "istio*" -type d)
 ln -fs $istioDir/bin/istioctl /usr/local/bin/
-echo "istioctl is ready at $(which istioctl)"
+ok "istioctl installed at $(which istioctl)"
+
+info "Running Istio pre-installation checks ..."
 istioctl x precheck
+
+info "Installing Istio (default profile) ..."
 istioctl install --skip-confirmation
+ok "Istio installed"
+
+info "Applying Istio gateway ..."
 kubectl apply -f ${componentsDir}/istio/gateway.yaml
+ok "Istio gateway applied"
 
-## install MetalLB (emulated network loadbalancer)
-##  https://metallb.universe.tf/installation/
+## MetalLB
+section "MetalLB Load Balancer"
+info "Enabling strictARP on kube-proxy ..."
 kubectl get configmap kube-proxy -n kube-system -o yaml | \
-sed -e "s/strictARP: false/strictARP: true/" | \
-kubectl apply -f - -n kube-system
-kubectl apply -f ${componentsDir}/metallb/crds.yaml --server-side
-kubectl apply -f ${componentsDir}/metallb/metallb-native.yaml
-echo "...lets wait a bit for metallb-controller to be ready..."
-sleep 20
-kubectl apply -f ${componentsDir}/metallb/webhook.yaml
-kubectl apply -f ${componentsDir}/metallb/configuration.yaml
+  sed -e "s/strictARP: false/strictARP: true/" | \
+  kubectl apply -f - -n kube-system
+ok "kube-proxy strictARP enabled"
 
-## Install monitoring stack
+info "Applying MetalLB CRDs ..."
+kubectl apply -f ${componentsDir}/metallb/crds.yaml --server-side
+
+info "Applying MetalLB native manifest ..."
+kubectl apply -f ${componentsDir}/metallb/metallb-native.yaml
+
+warn "Waiting 20s for MetalLB controller to become ready ..."
+sleep 20
+
+info "Applying MetalLB webhook configuration ..."
+kubectl apply -f ${componentsDir}/metallb/webhook.yaml
+
+info "Applying MetalLB IP pool configuration ..."
+kubectl apply -f ${componentsDir}/metallb/configuration.yaml
+ok "MetalLB installed and configured"
+
+## Monitoring stack
+section "Monitoring Stack"
+info "Adding Helm repositories ..."
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
-helm install loki grafana/loki-stack -n monitoring --create-namespace --set promtail.enabled=true
-kubectl create secret generic monitoring-grafana -n monitoring --from-literal=admin-user=admin --from-literal=admin-password=admin
-helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f ${componentsDir}/monitoring/kube-prometheus-stack-values.yaml
+ok "Helm repositories updated"
 
-echo -e "\nAll k8s components installed and ready!"
+info "Installing Loki stack ..."
+helm upgrade --install loki grafana/loki-stack -n monitoring --create-namespace --set promtail.enabled=true
+ok "Loki stack installed"
+
+info "Creating Grafana admin credentials secret ..."
+kubectl create secret generic monitoring-grafana -n monitoring \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password=admin \
+  --dry-run=client -o yaml | kubectl apply -f -
+ok "Grafana admin secret created"
+
+info "Installing kube-prometheus-stack ..."
+helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring \
+  -f ${componentsDir}/monitoring/kube-prometheus-stack-values.yaml
+ok "kube-prometheus-stack installed"
+
+echo
+ok "All k8s components installed and ready"
