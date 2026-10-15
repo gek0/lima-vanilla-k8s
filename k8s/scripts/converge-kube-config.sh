@@ -2,8 +2,9 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-ADMIN_CONFIG="${SCRIPT_DIR}/../manifests/cluster-access/cluster-admin-config.yaml"
-READER_CONFIG="${SCRIPT_DIR}/../manifests/cluster-access/cluster-reader-config.yaml"
+COMPONENTS_DIR="${SCRIPT_DIR}/../components/cluster-access"
+ADMIN_CONFIG="${COMPONENTS_DIR}/cluster-admin-config.yaml"
+READER_CONFIG="${COMPONENTS_DIR}/cluster-reader-config.yaml"
 
 section "Kubeconfig Merge"
 

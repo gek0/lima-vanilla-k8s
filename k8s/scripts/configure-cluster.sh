@@ -3,7 +3,7 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-MANIFESTS_DIR="${SCRIPT_DIR}/../manifests/cluster-access"
+COMPONENTS_DIR="${SCRIPT_DIR}/../components/cluster-access"
 DEFAULT_NAMESPACE="kube-system"
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
@@ -42,8 +42,8 @@ fi
 
 # Apply cluster-access service accounts, RBAC and token secrets (admin + reader)
 section "Creating cluster access"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-admin.yaml"
-kubectl apply -f "${MANIFESTS_DIR}/cluster-reader.yaml"
+kubectl apply -f "${COMPONENTS_DIR}/cluster-admin.yaml"
+kubectl apply -f "${COMPONENTS_DIR}/cluster-reader.yaml"
 ok "Cluster access resources applied"
 
 section "Generating kubeconfigs"
@@ -54,10 +54,10 @@ CLUSTER_CA=$(kubectl config view --raw -o=go-template='{{range .clusters}}{{if e
 CLUSTER_SERVER=$(kubectl config view --raw -o=go-template='{{range .clusters}}{{if eq .name "'''${CURRENT_CLUSTER}'''"}}{{ .cluster.server }}{{end}}{{ end }}')
 
 ADMIN_TOKEN=$(kubectl -n ${DEFAULT_NAMESPACE} get secret cluster-admin-token-secret -o=go-template='{{.data.token}}' | base64 --decode)
-write_kubeconfig "k8s-admin" "cluster-admin" "${ADMIN_TOKEN}" "${MANIFESTS_DIR}/cluster-admin-config.yaml"
+write_kubeconfig "k8s-admin" "cluster-admin" "${ADMIN_TOKEN}" "${COMPONENTS_DIR}/cluster-admin-config.yaml"
 
 READER_TOKEN=$(kubectl -n ${DEFAULT_NAMESPACE} get secret cluster-reader-token-secret -o=go-template='{{.data.token}}' | base64 --decode)
-write_kubeconfig "k8s-reader" "cluster-reader" "${READER_TOKEN}" "${MANIFESTS_DIR}/cluster-reader-config.yaml"
+write_kubeconfig "k8s-reader" "cluster-reader" "${READER_TOKEN}" "${COMPONENTS_DIR}/cluster-reader-config.yaml"
 
 section "Worker node join command"
 kubeadm token create --print-join-command
