@@ -21,7 +21,9 @@
     - Calico CNI
     - Metrics Server
     - Istio ingress + istioctl
-    - MetalLB
+    - MetalLB (L2 mode, IP pool `192.168.104.50-70`)
+    - Local Path Provisioner (dynamic PV provisioning via node local filesystem)
+    - Monitoring stack (Prometheus, Grafana, Loki + Promtail, Alertmanager)
 - [OPTIONAL]: if you'd like to manage the cluster from host using your tools run `./converge-kube-config.sh` to update local ./kube/config file
   - `k9s` and `kubectl` are also installed in **master-node** so cluster can be configured from there directly
 - join worker Nodes using the token provided with first script
@@ -29,5 +31,20 @@
 ## K8s part
 - use manifests in `k8s/manifests` directory per your liking, everything provided as learning examples
 
+## Exposed Services
+
+All user-facing services are exposed via MetalLB from the pool `192.168.104.50-70`:
+
+| Component              | Address                       | Credentials / Notes                                              |
+|------------------------|-------------------------------|------------------------------------------------------------------|
+| Istio Ingress Gateway  | http://192.168.104.50         | Routes `*.local.io` hosts — wire via VirtualService              |
+| ArgoCD                 | http://192.168.104.52         | admin / run `patch-argocd-service.sh` to print initial password  |
+| Vault                  | http://192.168.104.53:8200    | See `k8s/manifests/hashicorp-vault/README.md`                    |
+| Grafana                | http://192.168.104.54         | admin / admin — Prometheus & Loki datasources pre-configured     |
+
+Prometheus and Alertmanager are ClusterIP only — accessible through Grafana or via `kubectl port-forward`.
+
 ## Host part
-- use `port-forward.sh` script on your host to access LoadBalancer configured k8s service to access it in your host browser
+- use `port-forward.sh` script on your host to access a k8s service via SSH tunnel from your Mac browser
+  - usage: `./port-forward.sh <host_port:node_port/protocol>` (e.g. `./port-forward.sh 80:30718/TCP`)
+  - privileged ports (< 1024) are automatically remapped to `port + 8000` to avoid macOS restrictions (e.g. port 80 → localhost:8080)
