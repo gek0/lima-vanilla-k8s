@@ -4,3 +4,6 @@ server:
     enabled: true
     raft:
       enabled: true
+  dataStorage:
+    storageClass: local-path
+    size: 1Gi

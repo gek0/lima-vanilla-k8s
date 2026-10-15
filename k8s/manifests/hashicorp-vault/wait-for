@@ -1,1 +1,1 @@
-persistentvolumeclaim/data-vault-0 vault
+statefulset/vault vault

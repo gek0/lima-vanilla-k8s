@@ -2,23 +2,10 @@
 
 Vault HA Raft setup + example webapp that reads secrets from it.
 
-## Installation
-
-Run from master:
-```
-./scripts/manifest-installer.sh
-```
-Select `hashicorp-vault`. The installer runs these steps automatically:
-1. **`setup-requirements-service.sh`** — adds HashiCorp Helm repo and installs Vault via Helm
-2. Applies `vault-manifests.yaml` (namespace, PVs, PVCs, VirtualService)
-3. Waits for PVC to be bound
-4. **`patch-service.sh`** — exposes via MetalLB, initializes Vault, unseals all pods, joins Raft cluster
-
-> After install, if pods are stuck in Pending: SSH to each Worker node and run `sudo chmod -R 757 /tmp/vault`
-
-> `cluster-keys.json` (unseal key + root token) is written to this directory — keep it safe, it is gitignored.
 
 ## Working with Vault secrets
+
+After the installation is completed safely store "Root token" and use if in further steps!
 
 Exec into vault-0 and log in with the root token from `cluster-keys.json`:
 ```
@@ -52,8 +39,13 @@ vault write auth/kubernetes/role/webapp \
 
 ## Sample webapp
 
+- prebuild image available on https://hub.docker.com/r/mburisa93/vault-webapp-example
+ - re-build and update manually from `webapp-build` directory
+
 ```
-kubectl apply -f webapp-manifests.yaml
-kubectl port-forward -n vault service/webapp 8000:80
-curl http://localhost:8000/get/env
+kubectl apply -f webapp-build/webapp-manifests.yaml
+
+# run port-forward...
+
+curl http://localhost:<SERVICE_PORT>/get/env
 ```

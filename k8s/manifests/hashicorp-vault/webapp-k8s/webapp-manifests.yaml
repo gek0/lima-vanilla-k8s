@@ -43,7 +43,7 @@ spec:
       serviceAccountName: webapp
       containers:
         - name: app
-          image: mburisa93/vault-webapp-example:1.0.0
+          image: mburisa93/vault-webapp-example:1.0.1
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

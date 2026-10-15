@@ -73,15 +73,15 @@ section "Installing ${service}"
 if [[ -f "${SERVICE_DIR}/namespace.yaml" ]]
 then
   info "Applying namespace ..."
-  kubectl apply --server-side -f "${SERVICE_DIR}/namespace.yaml"
+  kubectl apply --server-side --force-conflicts -f "${SERVICE_DIR}/namespace.yaml"
 fi
 
-# Apply remaining yamls
+# Apply remaining yamls — skip Helm values files (*-values.yaml)
 while IFS= read -r yaml
 do
   info "Applying $(basename "$yaml") ..."
-  kubectl apply --server-side -f "$yaml"
-done < <(find "$SERVICE_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" | sort)
+  kubectl apply --server-side --force-conflicts -f "$yaml"
+done < <(find "$SERVICE_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" ! -name "*-values.yaml" | sort)
 
 ok "${service} manifests applied"
 
