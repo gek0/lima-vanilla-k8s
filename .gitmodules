@@ -1,6 +1,6 @@
-[submodule "k8s/manifests/argocd-example/sample-k8s-app"]
-	path = k8s/manifests/argocd-example/sample-k8s-app
-	url = https://github.com/gek0/sample-k8s-app
-[submodule "k8s/manifests/argocd-example/sample-k8s-gitops"]
-	path = k8s/manifests/argocd-example/sample-k8s-gitops
-	url = https://github.com/gek0/sample-k8s-gitops
+[submodule "k8s/manifests/argocd/sample-k8s-app"]
+	path = k8s/manifests/argocd/sample-k8s-app
+	url = https://github.com/gek0/sample-k8s-app.git
+[submodule "k8s/manifests/argocd/sample-k8s-gitops"]
+	path = k8s/manifests/argocd/sample-k8s-gitops
+	url = https://github.com/gek0/sample-k8s-gitops.git

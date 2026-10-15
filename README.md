@@ -17,6 +17,7 @@
   - copy the node command give on the console
 - connect to **worker-nodes[*]** using `limactl shell worker-X` command and paste/apply the command from previous step
 - run `sudo -i` and inside /root/k8s/ directory run `./scripts/configure-cluster.sh`
+  - pass `--skip-install` to skip component installation on subsequent runs: `./scripts/configure-cluster.sh --skip-install`
   - this will configure Admin user for cluster, install all needed components, and merge the kubeconfig locally:
     - [Calico](https://www.tigera.io/project-calico/) CNI
     - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server)
