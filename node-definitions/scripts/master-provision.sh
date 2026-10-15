@@ -37,6 +37,8 @@ sleep 1
 # Install dependencies
 sudo apt-get update -y
 sudo apt install -y curl gpg gnupg2 software-properties-common apt-transport-https ca-certificates
+curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh" | sh
+sudo mv crossplane /usr/local/bin/
 
 # Install Helm (latest)
 HELM_BUILDKITE_APT_KEY_ID="DDF78C3E6EBB2D2CC223C95C62BA89D07698DBC6"

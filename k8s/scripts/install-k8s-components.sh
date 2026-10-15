@@ -100,5 +100,19 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n 
   -f ${componentsDir}/monitoring/kube-prometheus-stack-values.yaml
 ok "kube-prometheus-stack installed"
 
+## Crossplane
+section "Crossplane"
+info "Adding Crossplane Helm repository ..."
+helm repo add crossplane-stable https://charts.crossplane.io/stable
+helm repo update
+ok "Helm repository updated"
+
+info "Creating crossplane-system namespace ..."
+kubectl create namespace crossplane-system --dry-run=client -o yaml | kubectl apply -f -
+
+info "Installing Crossplane ..."
+helm upgrade --install crossplane --namespace crossplane-system crossplane-stable/crossplane
+ok "Crossplane installed"
+
 echo
 ok "All k8s components installed and ready"

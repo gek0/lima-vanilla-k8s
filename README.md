@@ -18,12 +18,13 @@
 - connect to **worker-nodes[*]** using `limactl shell worker-X` command and paste/apply the command from previous step
 - run `sudo -i` and inside /root/k8s/ directory run `./scripts/configure-cluster.sh`
   - this will configure Admin user for cluster, install all needed components, and merge the kubeconfig locally:
-    - Calico CNI
-    - Metrics Server
-    - Istio ingress + istioctl
-    - MetalLB (L2 mode, IP pool `192.168.104.50-70`)
-    - Local Path Provisioner (dynamic PV provisioning via node local filesystem)
-    - Monitoring stack (Prometheus, Grafana, Loki + Promtail, Alertmanager)
+    - [Calico](https://www.tigera.io/project-calico/) CNI
+    - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server)
+    - [Istio](https://istio.io) ingress + istioctl
+    - [MetalLB](https://metallb.universe.tf) (L2 mode, IP pool `192.168.104.50-70`)
+    - [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) (dynamic PV provisioning via node local filesystem)
+    - Monitoring stack ([Prometheus](https://prometheus.io), [Grafana](https://grafana.com), [Loki](https://grafana.com/oss/loki/) + Promtail, Alertmanager)
+    - [Crossplane](https://crossplane.io)
   - at the end it calls `scripts/converge-kube-config.sh` automatically to merge the cluster admin kubeconfig into `~/.kube/config`
 - [OPTIONAL]: re-run `k8s/scripts/converge-kube-config.sh` standalone at any time to re-merge the kubeconfig
   - `k9s` and `kubectl` are also installed in **master-node** so cluster can be configured from there directly
@@ -36,16 +37,18 @@
 
 All user-facing services are exposed via MetalLB from the pool `192.168.104.50-70`:
 
-| Component              | Address                       | Credentials / Notes                                              |
-|------------------------|-------------------------------|------------------------------------------------------------------|
-| Istio Ingress Gateway  | http://192.168.104.50         | Routes `*.local.io` hosts — wire via VirtualService              |
-| ArgoCD                 | http://192.168.104.52         | admin / run `patch-argocd-service.sh` to print initial password  |
-| Vault                  | http://192.168.104.53:8200    | See `k8s/manifests/hashicorp-vault/README.md`                    |
-| Grafana                | http://192.168.104.54         | admin / admin — Prometheus & Loki datasources pre-configured     |
+| Component                                              | Address                       | Credentials / Notes                                              |
+|--------------------------------------------------------|-------------------------------|------------------------------------------------------------------|
+| [Istio Ingress Gateway](https://istio.io)              | http://192.168.104.50         | Routes `*.local.io` hosts — wire via VirtualService              |
+| [ArgoCD](https://argo-cd.readthedocs.io)               | http://192.168.104.52         | admin / run `patch-argocd-service.sh` to print initial password  |
+| [Vault](https://www.vaultproject.io)                   | http://192.168.104.53:8200    | See `k8s/manifests/hashicorp-vault/README.md`                    |
+| [Grafana](https://grafana.com)                         | http://192.168.104.54         | admin / admin — Prometheus & Loki datasources pre-configured     |
 
 Prometheus and Alertmanager are ClusterIP only — accessible through Grafana or via `kubectl port-forward`.
 
 ## Host part
-- use `port-forward.sh` script on your host to access a k8s service via SSH tunnel from your Mac browser
-  - usage: `./port-forward.sh <host_port:node_port/protocol>` (e.g. `./port-forward.sh 80:30718/TCP`)
+- use `port-forward.sh` to access k8s services from your Mac via SSH tunnel
+  - **no argument** — auto-discovers all LoadBalancer services on `master-1` and forwards each NodePort to the same port on localhost
+  - **with argument** — forwards a single service: `./port-forward.sh <host_port:node_port/protocol>` (e.g. `./port-forward.sh 80:30718/TCP`)
   - privileged ports (< 1024) are automatically remapped to `port + 8000` to avoid macOS restrictions (e.g. port 80 → localhost:8080)
+  - when running without arguments, press Ctrl+C to stop all tunnels at once
