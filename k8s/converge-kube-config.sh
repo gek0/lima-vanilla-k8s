@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cp ~/.kube/config ~/.kube/config-backup
+cp ~/.kube/config ~/.kube/config-backup || echo "No existing kube config found, skipping backup."
 
 echo -e "\nKube config backup created. Press enter to continue with the setup..."
 read
