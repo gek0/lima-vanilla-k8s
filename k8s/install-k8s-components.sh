@@ -70,6 +70,12 @@ info "Applying MetalLB IP pool configuration ..."
 kubectl apply -f ${componentsDir}/metallb/configuration.yaml
 ok "MetalLB installed and configured"
 
+## Local Path Provisioner
+section "Local Path Provisioner"
+info "Installing local-path-provisioner for dynamic PV provisioning ..."
+kubectl apply -f ${componentsDir}/local-path-provisioner/local-path-storage.yaml
+ok "local-path storage class available"
+
 ## Monitoring stack
 section "Monitoring Stack"
 info "Adding Helm repositories ..."
