@@ -30,6 +30,26 @@
   - `k9s` and `kubectl` are also installed in **master-node** so cluster can be configured from there directly
 - join worker Nodes using the token provided with first script
 
+## Submodule Repositories
+
+Three Git submodules under `k8s/manifests/argocd/` form the GitOps setup:
+
+| Submodule | Repository | Purpose |
+|---|---|---|
+| `sample-k8s-argocd-bootstrap` | [gek0/sample-k8s-argocd-bootstrap](https://github.com/gek0/sample-k8s-argocd-bootstrap) | Installs ArgoCD; owns platform-level config (AppProjects, repo credentials, RBAC, root app) |
+| `sample-k8s-gitops` | [gek0/sample-k8s-gitops](https://github.com/gek0/sample-k8s-gitops) | ArgoCD Application and ApplicationSet definitions; Helm values and per-environment manifests |
+| `sample-k8s-app` | [gek0/sample-k8s-app](https://github.com/gek0/sample-k8s-app) | Kubernetes manifests for the nginx sample application (Deployment, Service, HPA) |
+
+After cloning, initialize them with:
+```bash
+git submodule update --init --recursive
+```
+
+To pull the latest commits from all submodules:
+```bash
+git submodule update --remote --recursive
+```
+
 ## K8s part
 
 ### ArgoCD-managed platform components
