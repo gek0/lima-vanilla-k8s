@@ -85,19 +85,42 @@ fi
 
 section "Installing ${service}"
 
-# namespace.yaml always first
+# Prompt for target namespace — default read from namespace.yaml if present
+DEFAULT_NAMESPACE=""
+if [[ -f "${INSTALL_DIR}/namespace.yaml" ]]
+then
+  DEFAULT_NAMESPACE=$(awk '/^metadata:/{f=1} f && /^[[:space:]]+name:/{print $2; exit}' "${INSTALL_DIR}/namespace.yaml")
+fi
+
+if [[ -n "$DEFAULT_NAMESPACE" ]]
+then
+  read -r -p $'\e[36m[INFO]\e[0m  Target namespace ['"${DEFAULT_NAMESPACE}"']: ' SERVICE_NAMESPACE
+  SERVICE_NAMESPACE="${SERVICE_NAMESPACE:-$DEFAULT_NAMESPACE}"
+else
+  read -r -p $'\e[36m[INFO]\e[0m  Target namespace: ' SERVICE_NAMESPACE
+fi
+info "Using namespace: ${SERVICE_NAMESPACE}"
+
+# namespace.yaml always first (cluster-scoped — no -n flag)
 if [[ -f "${INSTALL_DIR}/namespace.yaml" ]]
 then
   info "Applying namespace ..."
   kubectl apply --server-side --force-conflicts -f "${INSTALL_DIR}/namespace.yaml"
 fi
 
-# Apply remaining yamls — skip Helm values files (*-values.yaml)
+# install.yaml second — base install must precede any config overlays
+if [[ -f "${INSTALL_DIR}/install.yaml" ]]
+then
+  info "Applying install.yaml ..."
+  kubectl apply --server-side --force-conflicts -n "${SERVICE_NAMESPACE}" -f "${INSTALL_DIR}/install.yaml"
+fi
+
+# Apply remaining yamls — skip namespace, install, and Helm values files
 while IFS= read -r yaml
 do
   info "Applying $(basename "$yaml") ..."
-  kubectl apply --server-side --force-conflicts -f "$yaml"
-done < <(find "$INSTALL_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" ! -name "*-values.yaml" | sort)
+  kubectl apply --server-side --force-conflicts -n "${SERVICE_NAMESPACE}" -f "$yaml"
+done < <(find "$INSTALL_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" ! -name "install.yaml" ! -name "*-values.yaml" | sort)
 
 ok "${service} manifests applied"
 

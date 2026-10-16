@@ -94,7 +94,7 @@ bash "$SCRIPT_DIR/master-motd.sh"
 chmod +x "$SCRIPT_DIR/host-ssh-standard-access.sh"
 bash "$SCRIPT_DIR/host-ssh-standard-access.sh"
 
-echo -e 'alias ku="kubectl"\ncomplete -F __start_kubectl ku' >> ~/.bashrc
+echo -e 'source <(kubectl completion bash)\nalias ku="kubectl"\ncomplete -F __start_kubectl ku' >> ~/.bashrc
 
 # Install k9s (latest)
 cd /tmp
