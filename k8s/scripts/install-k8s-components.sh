@@ -76,30 +76,6 @@ info "Installing local-path-provisioner for dynamic PV provisioning ..."
 kubectl apply -f ${componentsDir}/local-path-provisioner/local-path-storage.yaml
 ok "local-path storage class available"
 
-## Monitoring stack
-section "Monitoring Stack"
-info "Adding Helm repositories ..."
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-ok "Helm repositories updated"
-
-info "Installing Loki stack ..."
-helm upgrade --install loki grafana/loki-stack -n monitoring --create-namespace --set promtail.enabled=true
-ok "Loki stack installed"
-
-info "Creating Grafana admin credentials secret ..."
-kubectl create secret generic monitoring-grafana -n monitoring \
-  --from-literal=admin-user=admin \
-  --from-literal=admin-password=admin \
-  --dry-run=client -o yaml | kubectl apply -f -
-ok "Grafana admin secret created"
-
-info "Installing kube-prometheus-stack ..."
-helm upgrade --install monitoring prometheus-community/kube-prometheus-stack -n monitoring \
-  -f ${componentsDir}/monitoring/kube-prometheus-stack-values.yaml
-ok "kube-prometheus-stack installed"
-
 ## Crossplane
 section "Crossplane"
 info "Adding Crossplane Helm repository ..."

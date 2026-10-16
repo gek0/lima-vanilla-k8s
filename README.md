@@ -24,7 +24,6 @@
     - [Istio](https://istio.io) ingress + istioctl
     - [MetalLB](https://metallb.universe.tf) (L2 mode, IP pool `192.168.104.50-70`)
     - [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) (dynamic PV provisioning via node local filesystem)
-    - Monitoring stack ([Prometheus](https://prometheus.io), [Grafana](https://grafana.com), [Loki](https://grafana.com/oss/loki/) + Promtail, Alertmanager)
     - [Crossplane](https://crossplane.io)
   - at the end it calls `scripts/converge-kube-config.sh` automatically to merge the cluster admin kubeconfig into `~/.kube/config`
 - [OPTIONAL]: re-run `k8s/scripts/converge-kube-config.sh` standalone at any time to re-merge the kubeconfig
@@ -32,6 +31,13 @@
 - join worker Nodes using the token provided with first script
 
 ## K8s part
+
+### ArgoCD-managed platform components
+
+After ArgoCD is installed (see `k8s/manifests/argocd/sample-k8s-argocd-bootstrap`), the following platform components are managed via GitOps from [sample-k8s-gitops](https://github.com/gek0/sample-k8s-gitops) — apply the Application manifests once and ArgoCD reconciles them continuously
+
+
+### Manual manifests
 - use manifests in `k8s/manifests` directory per your liking, everything provided as learning examples
 - run `k8s/scripts/manifest-installer.sh` on master for an interactive menu to install any service from `k8s/manifests/`
   - runs `setup-requirements-service.sh` first if present (Helm installs, pre-requisites), then applies manifests, then `patch-service.sh`
