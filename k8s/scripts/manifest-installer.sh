@@ -37,6 +37,22 @@ done
 
 SERVICE_DIR="${MANIFESTS_DIR}/${service}"
 
+# Support services that keep install files in a nested install/ subdirectory
+# (e.g. a service stored as a subrepo with install/ inside it).
+# Falls back to SERVICE_DIR if no nested install/ is found.
+INSTALL_DIR="${SERVICE_DIR}"
+if ! find "${SERVICE_DIR}" -maxdepth 1 -name "*.yaml" | grep -q .
+then
+  found=$(find "${SERVICE_DIR}" -mindepth 2 -maxdepth 2 -type d -name "install" | head -1)
+  if [[ -n "$found" ]]
+  then
+    INSTALL_DIR="$found"
+  fi
+fi
+
+# wait-for lives alongside the other install files (in INSTALL_DIR or service root)
+WAIT_FOR_FILE="${INSTALL_DIR}/wait-for"
+
 if [[ "$DELETE_MODE" == true ]]
 then
   section "Deleting ${service}"
@@ -48,12 +64,12 @@ then
   do
     info "Deleting $(basename "$yaml") ..."
     kubectl delete --ignore-not-found -f "$yaml"
-  done < <(find "$SERVICE_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" | sort -r)
+  done < <(find "$INSTALL_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" | sort -r)
 
-  if [[ -f "${SERVICE_DIR}/namespace.yaml" ]]
+  if [[ -f "${INSTALL_DIR}/namespace.yaml" ]]
   then
     info "Deleting namespace ..."
-    kubectl delete --ignore-not-found -f "${SERVICE_DIR}/namespace.yaml"
+    kubectl delete --ignore-not-found -f "${INSTALL_DIR}/namespace.yaml"
   fi
 
   ok "${service} resources deleted"
@@ -70,10 +86,10 @@ fi
 section "Installing ${service}"
 
 # namespace.yaml always first
-if [[ -f "${SERVICE_DIR}/namespace.yaml" ]]
+if [[ -f "${INSTALL_DIR}/namespace.yaml" ]]
 then
   info "Applying namespace ..."
-  kubectl apply --server-side --force-conflicts -f "${SERVICE_DIR}/namespace.yaml"
+  kubectl apply --server-side --force-conflicts -f "${INSTALL_DIR}/namespace.yaml"
 fi
 
 # Apply remaining yamls — skip Helm values files (*-values.yaml)
@@ -81,14 +97,14 @@ while IFS= read -r yaml
 do
   info "Applying $(basename "$yaml") ..."
   kubectl apply --server-side --force-conflicts -f "$yaml"
-done < <(find "$SERVICE_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" ! -name "*-values.yaml" | sort)
+done < <(find "$INSTALL_DIR" -maxdepth 1 -name "*.yaml" ! -name "namespace.yaml" ! -name "*-values.yaml" | sort)
 
 ok "${service} manifests applied"
 
 # Run patch-service.sh if present
-if [[ -f "${SERVICE_DIR}/patch-service.sh" ]]
+if [[ -f "${INSTALL_DIR}/patch-service.sh" ]]
 then
-  if [[ -f "${SERVICE_DIR}/wait-for" ]]
+  if [[ -f "${WAIT_FOR_FILE}" ]]
   then
     section "Waiting for ${service} to be ready"
     while IFS=' ' read -r resource namespace
@@ -110,13 +126,13 @@ then
           ;;
       esac
       ok "${resource} is ready"
-    done < "${SERVICE_DIR}/wait-for"
+    done < "${WAIT_FOR_FILE}"
   else
     warn "No wait-for file found — waiting 15s before patching ..."
     sleep 15
   fi
   section "Patching ${service}"
-  bash "${SERVICE_DIR}/patch-service.sh"
+  bash "${INSTALL_DIR}/patch-service.sh"
 fi
 
 ok "${service} installation complete"

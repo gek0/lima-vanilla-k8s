@@ -4,3 +4,6 @@
 [submodule "k8s/manifests/argocd/sample-k8s-gitops"]
 	path = k8s/manifests/argocd/sample-k8s-gitops
 	url = https://github.com/gek0/sample-k8s-gitops.git
+[submodule "k8s/manifests/argocd/sample-k8s-argocd-bootstrap"]
+	path = k8s/manifests/argocd/sample-k8s-argocd-bootstrap
+	url = https://github.com/gek0/sample-k8s-argocd-bootstrap
