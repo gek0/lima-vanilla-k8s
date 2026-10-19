@@ -42,6 +42,7 @@ argocd login "${ARGOCD_IP}:80" --plaintext --username admin --password "${ARGOCD
 
 ```bash
 argocd app list                          # list all apps with sync/health status
+argocd app list -l tier=infra            # list all apps with a specific label, example: "infra"
 argocd app get vault                     # detailed status for a single app
 argocd app resources vault               # K8s resources managed by the app
 argocd app resources vault --output tree # same, as a resource tree
