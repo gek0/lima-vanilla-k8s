@@ -101,6 +101,16 @@ kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/eso \
   ttl=1h
 ok "ESO Kubernetes auth role created"
 
+section "Vault — Crossplane AWS (devops-infra-aws)"
+read -rp "AWS Access Key ID: " AWS_KEY_ID
+read -rsp "AWS Secret Access Key: " AWS_SECRET_KEY
+echo
+
+info "Storing AWS credentials in Vault at secret/crossplane/devops-aws ..."
+CREDS_B64=$(printf '[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n' "$AWS_KEY_ID" "$AWS_SECRET_KEY" | base64 -w 0)
+kubectl exec vault-0 -n vault -- sh -c "echo '${CREDS_B64}' | base64 -d > /tmp/aws-creds && vault kv put secret/crossplane/devops-aws credentials=@/tmp/aws-creds && rm /tmp/aws-creds"
+ok "AWS credentials stored — ESO will sync to crossplane-creds-devops-aws in github-personal-crossplane-devops-aws"
+
 section "Vault Ready"
 ok "Vault is accessible at http://192.168.104.53:8200"
 info "Root token: ${ROOT_TOKEN}"
