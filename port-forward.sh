@@ -9,7 +9,7 @@
 # Conflicting local ports are resolved by incrementing by 1 until a free port is found.
 
 set -o pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/k8s/scripts/lib.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/scripts/lib.sh"
 
 NODE="master-1"
 NODE_SSH_PORT=$(limactl list | grep "$NODE" | awk -F ' ' '{ print $3 }' | awk -F ':' '{ print $2 }')
