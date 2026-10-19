@@ -21,7 +21,7 @@ Changes to the **bootstrap repo** (`sample-k8s-argocd-bootstrap`) require a manu
 
 | Method | URL |
 |---|---|
-| In-cluster (MetalLB) | http://192.168.104.52 |
+| In-cluster (MetalLB) | dynamic — `kubectl get svc argocd-server -n argocd` |
 | Virtual host (Istio) | http://argocd.local.io |
 | Host port-forward | http://localhost:8080 (via `port-forward.sh`) |
 

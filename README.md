@@ -34,7 +34,7 @@ The script installs all components, creates an admin user, and merges the kubeco
 | [Calico](https://www.tigera.io/project-calico/) | CNI |
 | [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) | Node metrics (needed for HPA, ...) |
 | [Istio](https://istio.io) | Ingress + `istioctl` |
-| [MetalLB](https://metallb.universe.tf) | L2 mode, pool `192.168.104.50–70` |
+| [MetalLB](https://metallb.universe.tf) | L2 mode, pool `192.168.104.50–90` — update range in `k8s/components/metallb/configuration.yaml` |
 | [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) | Dynamic PV via node filesystem |
 | [Crossplane](https://crossplane.io) | AWS infra provisioning - platform example  |
 
@@ -44,12 +44,18 @@ All necessary binaries and tools (like `k9s`, `kubectl` and `terraform`) are ava
 
 ## Exposed Services
 
-| Service | Address | Access |
-|---|---|---|
-| [ArgoCD](https://argo-cd.readthedocs.io) | http://192.168.104.52 | See `k8s/manifests/argocd/sample-k8s-argocd-bootstrap/README.md` |
-| [Vault](https://www.vaultproject.io) | http://192.168.104.53 | See `k8s/manifests/hashicorp-vault/README.md` |
-| [Grafana](https://grafana.com) | http://192.168.104.54 | Installed and managed by ArgoCD. See [sample-k8s-gitops](https://github.com/gek0/sample-k8s-gitops) |
-| Vault webapp demo | http://192.168.104.55 | Reads secrets from Vault via k8s SA auth |
+All LoadBalancer services get IPs dynamically from the MetalLB pool. Find them with:
+
+```bash
+kubectl get svc -A --field-selector spec.type=LoadBalancer
+```
+
+| Service | Access |
+|---|---|
+| [ArgoCD](https://argo-cd.readthedocs.io) | See `k8s/manifests/argocd/README.md` |
+| [Vault](https://www.vaultproject.io) | See `k8s/manifests/argocd/sample-k8s-gitops/README.md` — run `k8s/scripts/vault-post-install.sh` once after first sync |
+| [Grafana](https://grafana.com) | Managed by ArgoCD — admin / admin |
+| Vault webapp demo | Reads secrets from Vault via k8s SA auth |
 
 > Prometheus and Alertmanager are ClusterIP only — access via Grafana or `kubectl port-forward`.
 
