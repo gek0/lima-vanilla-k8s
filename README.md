@@ -119,6 +119,16 @@ statefulset/my-db my-namespace
 
 ---
 
+## Secrets
+
+Runtime secrets are written to `secrets/` at the repo root (gitignored — never committed).
+
+| File | Created by | Contents |
+|---|---|---|
+| `secrets/cluster-keys.json` | `k8s/scripts/vault-post-install.sh` | Vault unseal key and root token |
+
+---
+
 ## Kubeconfig
 
 `configure-cluster.sh` merges the cluster admin kubeconfig automatically. To re-merge at any time and use on the `master-1` node:

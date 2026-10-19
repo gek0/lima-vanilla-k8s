@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Run after ArgoCD has synced Vault. Handles init, unseal, and raft join — imperative
 # operations that ArgoCD cannot manage. Service type and MetalLB IP are set in Helm values.
-source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-KEYS_FILE="${SCRIPT_DIR}/cluster-keys.json"
+KEYS_FILE="${SCRIPT_DIR}/../../secrets/cluster-keys.json"
 
 section "Vault Initialization"
 

@@ -2,8 +2,9 @@
 k8s/components/cluster-access/cluster-admin-config.yaml
 k8s/components/cluster-access/cluster-reader-config.yaml
 
-# contains vault unseal key and root token
-k8s/scripts/cluster-keys.json
+# runtime secrets — never commit
+secrets/
+!secrets/.gitkeep
 
 # AI-specific files
 .claude
