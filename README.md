@@ -38,7 +38,7 @@ The script installs all components, creates an admin user, and merges the kubeco
 | [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) | Dynamic PV via node filesystem |
 | [Crossplane](https://crossplane.io) | AWS infra provisioning — managed by ArgoCD (`argocd/crossplane/`) |
 
-All necessary binaries and tools (like `k9s`, `kubectl` and `terraform`) are available on master-1 for in-cluster work. Check `node-definitions/scripts/master-provision.sh` for full setup.
+All necessary binaries and tools (like `k9s`, `kubectl` and `argocd`, ...) are available on master-1 for in-cluster work. Check `node-definitions/scripts/master-provision.sh` for full setup.
 
 ---
 

@@ -105,12 +105,6 @@ tar -xzf kubectx.tar.gz kubectx && sudo mv kubectx /usr/local/bin/
 tar -xzf kubens.tar.gz kubens   && sudo mv kubens  /usr/local/bin/
 rm -f kubectx.tar.gz kubens.tar.gz
 
-# Install Terraform (latest)
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt-get update
-sudo apt-get install -y terraform
-
 # Install ArgoCD CLI (latest)
 curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-arm64
 sudo install -m 555 argocd /usr/local/bin/argocd
