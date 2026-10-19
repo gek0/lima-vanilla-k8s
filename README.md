@@ -85,14 +85,14 @@ git submodule update --init --recursive    # first-time init
 git submodule update --remote --recursive  # pull latest from all submodules
 ```
 
-After ArgoCD is installed, apply the Application manifests once — ArgoCD reconciles them continuously from that point.
+After ArgoCD is installed, apply the `core` and `applications` manifests once (from `sample-k8s-argocd-bootstrap` repository) — ArgoCD reconciles them continuously from that point.
 
 ---
 
-## Manual Manifests & Adding Services
+## Adding additional services
 
 Run the interactive installer from master to install any service in `k8s/manifests/`:
-- either add them to ArgoCD or directly to its own directory for simple service installations and tests
+- either add your services to ArgoCD or directly to its own directory for simple service installations and tests
 
 ```bash
 ./scripts/manifest-installer.sh           # interactive menu
@@ -121,7 +121,7 @@ statefulset/my-db my-namespace
 
 ## Kubeconfig
 
-`configure-cluster.sh` merges the cluster admin kubeconfig automatically. To re-merge at any time:
+`configure-cluster.sh` merges the cluster admin kubeconfig automatically. To re-merge at any time and use on the `master-1` node:
 
 ```bash
 k8s/scripts/converge-kube-config.sh
