@@ -53,7 +53,7 @@ All necessary binaries and tools (like `k9s`, `kubectl` and `terraform`) are ava
 
 > Prometheus and Alertmanager are ClusterIP only — access via Grafana or `kubectl port-forward`.
 
-### Accessing services from your Mac
+### Accessing services from your Host
 
 ```bash
 ./port-forward.sh              # auto-discovers all LoadBalancer services and forwards each
@@ -86,6 +86,7 @@ After ArgoCD is installed, apply the Application manifests once — ArgoCD recon
 ## Manual Manifests & Adding Services
 
 Run the interactive installer from master to install any service in `k8s/manifests/`:
+- either add them to ArgoCD or directly to its own directory for simple service installations and tests
 
 ```bash
 ./scripts/manifest-installer.sh           # interactive menu
