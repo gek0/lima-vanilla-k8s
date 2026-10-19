@@ -114,4 +114,9 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://
 sudo apt-get update
 sudo apt-get install -y terraform
 
+# Install ArgoCD CLI (latest)
+curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-arm64
+sudo install -m 555 argocd /usr/local/bin/argocd
+rm -f argocd
+
 echo "I'm ready and installed!"
