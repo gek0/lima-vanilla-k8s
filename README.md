@@ -36,7 +36,7 @@ The script installs all components, creates an admin user, and merges the kubeco
 | [Istio](https://istio.io) | Ingress + `istioctl` |
 | [MetalLB](https://metallb.universe.tf) | L2 mode, pool `192.168.104.50–90` — update range in `k8s/components/metallb/configuration.yaml` |
 | [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) | Dynamic PV via node filesystem |
-| [Crossplane](https://crossplane.io) | AWS infra provisioning - platform example  |
+| [Crossplane](https://crossplane.io) | AWS infra provisioning — managed by ArgoCD (`argocd/crossplane/`) |
 
 All necessary binaries and tools (like `k9s`, `kubectl` and `terraform`) are available on master-1 for in-cluster work. Check `node-definitions/scripts/master-provision.sh` for full setup.
 

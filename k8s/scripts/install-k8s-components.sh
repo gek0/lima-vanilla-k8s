@@ -76,19 +76,5 @@ info "Installing local-path-provisioner for dynamic PV provisioning ..."
 kubectl apply -f ${componentsDir}/local-path-provisioner/local-path-storage.yaml
 ok "local-path storage class available"
 
-## Crossplane
-section "Crossplane"
-info "Adding Crossplane Helm repository ..."
-helm repo add crossplane-stable https://charts.crossplane.io/stable
-helm repo update
-ok "Helm repository updated"
-
-info "Creating crossplane-system namespace ..."
-kubectl create namespace crossplane-system --dry-run=client -o yaml | kubectl apply -f -
-
-info "Installing Crossplane ..."
-helm upgrade --install crossplane --namespace crossplane-system crossplane-stable/crossplane
-ok "Crossplane installed"
-
 echo
 ok "All k8s components installed and ready"
