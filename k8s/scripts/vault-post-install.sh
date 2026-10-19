@@ -55,6 +55,52 @@ do
   ok "${pod} joined and unsealed"
 done
 
+section "Vault Configuration"
+info "Logging into vault-0 ..."
+kubectl exec vault-0 -n vault -- vault login "$ROOT_TOKEN"
+
+info "Enabling kv-v2 secrets engine ..."
+kubectl exec vault-0 -n vault -- sh -c 'vault secrets list | grep -q "^secret/" || vault secrets enable -path=secret kv-v2'
+
+info "Enabling Kubernetes auth ..."
+kubectl exec vault-0 -n vault -- sh -c 'vault auth list | grep -q "^kubernetes/" || vault auth enable kubernetes'
+kubectl exec vault-0 -n vault -- sh -c 'vault write auth/kubernetes/config kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"'
+ok "Kubernetes auth configured"
+
+section "Vault — Webapp"
+kubectl exec vault-0 -n vault -- sh -c 'vault policy write webapp - <<EOF
+path "secret/data/webapp/config" {
+  capabilities = ["read"]
+}
+EOF'
+ok "webapp policy created"
+
+kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/webapp \
+  bound_service_account_names=webapp \
+  bound_service_account_namespaces=github-personal-vault-webapp \
+  policies=webapp \
+  ttl=24h
+ok "webapp Kubernetes auth role created"
+
+info "Creating placeholder webapp secret — update values after install ..."
+kubectl exec vault-0 -n vault -- vault kv put secret/webapp/config username="user" password="pass"
+ok "webapp secret created at secret/webapp/config"
+
+section "Vault — ESO"
+kubectl exec vault-0 -n vault -- sh -c 'vault policy write eso - <<EOF
+path "secret/data/*" {
+  capabilities = ["read"]
+}
+EOF'
+ok "ESO policy created"
+
+kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/eso \
+  bound_service_account_names=eso-vault-auth \
+  bound_service_account_namespaces=external-secrets \
+  policies=eso \
+  ttl=1h
+ok "ESO Kubernetes auth role created"
+
 section "Vault Ready"
 ok "Vault is accessible at http://192.168.104.53:8200"
 info "Root token: ${ROOT_TOKEN}"
