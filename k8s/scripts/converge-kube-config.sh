@@ -16,8 +16,6 @@ else
 fi
 
 echo
-warn "Press enter to continue with the kubeconfig merge..."
-read
 
 section "Merging Configurations"
 
