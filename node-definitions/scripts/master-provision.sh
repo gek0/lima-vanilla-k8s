@@ -115,7 +115,7 @@ section "Tools"
 cd /tmp
 
 info "Installing k9s ..."
-curl -Lo k9s_linux_arm64.deb https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_linux_arm64.deb
+curl -Lso k9s_linux_arm64.deb https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_linux_arm64.deb
 sudo dpkg -i k9s_linux_arm64.deb
 ok "k9s installed"
 

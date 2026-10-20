@@ -9,11 +9,11 @@ A fully-automated kubeadm cluster running on [Lima-VM](https://lima-vm.io) — t
 
 ```bash
 # 1. Provision nodes (see node-definitions/README.md)
-#    Defaults: 1 master + 3 workers
+#    Defaults: 1 master + 2 workers
 
 # 2. Join workers — master prints the kubeadm join command on first boot
 limactl shell master-1   # copy the join command
-limactl shell worker-1   # paste & run it (repeat for worker-2, worker-3)
+limactl shell worker-1   # paste & run it (repeat for all workers)
 
 # 3. Configure the cluster from master
 limactl shell master-1

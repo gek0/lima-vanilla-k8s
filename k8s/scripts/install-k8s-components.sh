@@ -29,19 +29,16 @@ sleep 15
 
 info "Downloading Istio installer ..."
 cd /opt
-curl -sL https://istio.io/downloadIstio | sh -
-
+curl -Lso istio-install.sh https://istio.io/downloadIstio
+chmod +x istio-install.sh && ./istio-install.sh && rm istio-install.sh
 istioDir=$(find /opt -maxdepth 1 -name "istio*" -type d)
 ln -fs $istioDir/bin/istioctl /usr/local/bin/
 ok "istioctl installed at $(which istioctl)"
-
 info "Running Istio pre-installation checks ..."
 istioctl x precheck
-
 info "Installing Istio (default profile) ..."
 istioctl install --skip-confirmation
 ok "Istio installed"
-
 info "Applying Istio gateway ..."
 kubectl apply -f ${componentsDir}/istio/gateway.yaml
 ok "Istio gateway applied"
@@ -56,16 +53,13 @@ ok "kube-proxy strictARP enabled"
 
 info "Applying MetalLB CRDs ..."
 kubectl apply -f ${componentsDir}/metallb/crds.yaml --server-side
-
 info "Applying MetalLB native manifest ..."
 kubectl apply -f ${componentsDir}/metallb/metallb-native.yaml
-
-warn "Waiting 20s for MetalLB controller to become ready ..."
-sleep 20
-
+info "Waiting for MetalLB controller to become ready ..."
+kubectl rollout status deployment/controller -n metallb-system --timeout=180s
+ok "MetalLB controller ready"
 info "Applying MetalLB webhook configuration ..."
 kubectl apply -f ${componentsDir}/metallb/webhook.yaml
-
 info "Applying MetalLB IP pool configuration ..."
 kubectl apply -f ${componentsDir}/metallb/configuration.yaml
 ok "MetalLB installed and configured"
