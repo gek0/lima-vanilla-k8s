@@ -67,7 +67,7 @@ Everything below is deployed and continuously reconciled by ArgoCD after the ini
 | [Prometheus](https://prometheus.io) | `kube-prometheus-stack` | ClusterIP only — accessible via Grafana or `kubectl port-forward` |
 | [Loki](https://grafana.com/oss/loki/) | `loki-stack` | Log aggregation — ClusterIP only |
 | [External Secrets Operator](https://external-secrets.io) | `external-secrets` | Syncs secrets from Vault into K8s Secrets |
-| ESO Vault store | `eso-vault-store` | `ClusterSecretStore` wired to Vault via Kubernetes auth |
+| External Secrets vault store | `external-secrets-vault-store` | `ClusterSecretStore` wired to Vault via Kubernetes auth |
 | [Crossplane](https://crossplane.io) | `crossplane` | AWS infra provisioning |
 | Crossplane AWS providers | `crossplane-providers` | upbound provider-family-aws, provider-aws-s3, provider-aws-ec2 |
 | Crossplane devops-aws config | `crossplane-devops-aws-config` | ProviderConfig + ESO-synced credentials for devops team |
