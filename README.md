@@ -37,11 +37,23 @@ kubectl apply -f k8s/manifests/argocd/sample-k8s-argocd-bootstrap/core/projects/
 # create app-of-apps ("root" application start syncing all other ones)
 kubectl apply -f k8s/manifests/argocd/sample-k8s-argocd-bootstrap/core/applications/
 ```
-- once that is done proceed to Vault unseal and initial secrets configuration -> **prepare IAM User credentials at this step for Crossplane!**
-    - limit IAM user credentials at your will depeding on the resources you plan to provision (default needed: VPC + S3 R/W access)
-    - ` ./k8s/scripts/vault-post-install.sh`
+- once ArgoCD is syncing, wait for Vault to be healthy then run the post-install script — this initialises and unseals Vault, configures Kubernetes auth, sets up ESO and Crossplane roles, and prompts for AWS IAM credentials (needed for Crossplane S3/VPC provisioning)
+    - limit IAM user credentials depending on the resources you plan to provision (default: VPC + S3 R/W access)
+```bash
+k8s/scripts/vault-post-install.sh
+```
 
-- verify installation in cluster and check next sections
+- wait for Keycloak to be healthy, then run the Keycloak post-install script — this creates OAuth clients for Grafana, ArgoCD and Vault, and stores their secrets in Vault so ESO can sync them automatically
+```bash
+k8s/scripts/keycloak-post-install.sh
+```
+
+- re-run the Vault post-install script to activate Vault OIDC login via Keycloak (skipped on first run if Keycloak was not ready yet)
+```bash
+k8s/scripts/vault-post-install.sh
+```
+
+- verify installation in cluster and check the sections below
 
 ## Cluster components
 
@@ -63,11 +75,14 @@ Everything below is deployed and continuously reconciled by ArgoCD after the ini
 |---|---|---|
 | [Vault](https://www.vaultproject.io) | `vault` | HA Raft, 3 replicas — run `k8s/scripts/vault-post-install.sh` once after first sync |
 | Vault webapp | `vault-webapp` | Demo app reading secrets from Vault via Kubernetes auth |
-| [Grafana](https://grafana.com) | `kube-prometheus-stack` | admin / admin — Prometheus + Loki datasources pre-wired |
-| [Prometheus](https://prometheus.io) | `kube-prometheus-stack` | ClusterIP only — accessible via Grafana or `kubectl port-forward` |
-| [Loki](https://grafana.com/oss/loki/) | `loki-stack` | Log aggregation — ClusterIP only |
+| [Keycloak](https://www.keycloak.org) | `keycloak` | OIDC provider — run `k8s/scripts/keycloak-post-install.sh` once after first sync to create OAuth clients |
+| [Grafana](https://grafana.com) | `monitoring-stack` | Login via Keycloak — Prometheus + Loki datasources pre-wired |
+| [Prometheus](https://prometheus.io) | `monitoring-stack` | PromQL UI on port 9090 — dynamic MetalLB IP |
+| [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) | `monitoring-stack` | Alerts UI on port 9093 — dynamic MetalLB IP |
+| [Loki](https://grafana.com/oss/loki/) | `logging-stack` | Log aggregation — ClusterIP only, query via Grafana |
 | [External Secrets Operator](https://external-secrets.io) | `external-secrets` | Syncs secrets from Vault into K8s Secrets |
 | External Secrets vault store | `external-secrets-vault-store` | `ClusterSecretStore` wired to Vault via Kubernetes auth |
+| ArgoCD Keycloak OIDC | `argocd-keycloak-oidc` | Injects Keycloak client secret into ArgoCD — login via Keycloak |
 | [Crossplane](https://crossplane.io) | `crossplane` | AWS infra provisioning |
 | Crossplane AWS providers | `crossplane-providers` | upbound provider-family-aws, provider-aws-s3, provider-aws-ec2 |
 | Crossplane devops-aws config | `crossplane-devops-aws-config` | ProviderConfig + ESO-synced credentials for devops team |
@@ -91,10 +106,11 @@ kubectl get svc -A --field-selector spec.type=LoadBalancer
 |---|---|
 | [ArgoCD](https://argo-cd.readthedocs.io) | See `k8s/manifests/argocd/README.md` |
 | [Vault](https://www.vaultproject.io) | See `k8s/manifests/argocd/sample-k8s-gitops/README.md` — run `k8s/scripts/vault-post-install.sh` once after first sync |
-| [Grafana](https://grafana.com) | Managed by ArgoCD — admin / admin |
+| [Keycloak](https://www.keycloak.org) | OIDC provider for Grafana, ArgoCD and Vault — run `k8s/scripts/keycloak-post-install.sh` once after first sync |
+| [Grafana](https://grafana.com) | Managed by ArgoCD — login via Keycloak |
 | Vault webapp demo | Reads secrets from Vault via k8s SA auth |
 
-> Prometheus and Alertmanager are ClusterIP only — access via Grafana or `kubectl port-forward`.
+> Loki has no UI — query logs through Grafana.
 
 ### Accessing services from your Host
 

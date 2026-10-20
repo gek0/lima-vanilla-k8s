@@ -125,6 +125,36 @@ else
   ok "AWS credentials stored — ESO will sync to crossplane-creds-devops-aws in github-personal-crossplane-devops-aws"
 fi
 
+section "Vault — Keycloak OIDC Auth"
+if kubectl exec vault-0 -n vault -- vault auth list 2>/dev/null | grep -q "^oidc/"
+then
+  warn "Vault OIDC auth already configured — skipping"
+else
+  VAULT_OIDC_SECRET=$(kubectl exec vault-0 -n vault -- vault kv get -field=client_secret secret/keycloak/vault 2>/dev/null || true)
+  if [[ -z "$VAULT_OIDC_SECRET" ]]
+  then
+    warn "secret/keycloak/vault not found — skipping Vault OIDC setup"
+    warn "Run k8s/scripts/keycloak-post-install.sh first to create Keycloak clients and store secrets"
+  else
+    info "Enabling OIDC auth method ..."
+    kubectl exec vault-0 -n vault -- vault auth enable oidc
+
+    kubectl exec vault-0 -n vault -- vault write auth/oidc/config \
+      oidc_discovery_url="http://keycloak.local.io/realms/master" \
+      oidc_client_id="vault" \
+      oidc_client_secret="${VAULT_OIDC_SECRET}" \
+      default_role="default"
+
+    kubectl exec vault-0 -n vault -- vault write auth/oidc/role/default \
+      bound_audiences="vault" \
+      allowed_redirect_uris="http://vault.local.io/ui/vault/auth/oidc/oidc/callback" \
+      user_claim="sub" \
+      policies="default" \
+      ttl=8h
+    ok "Vault OIDC auth configured — users can now log in via Keycloak"
+  fi
+fi
+
 section "Vault Ready"
 ok "Vault is accessible at http://192.168.104.53:8200"
 info "Root token: ${ROOT_TOKEN}"
