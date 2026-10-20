@@ -3,7 +3,7 @@ images:
     arch: "aarch64"
 
 cpus: 4
-memory: "6GiB"
+memory: "8GiB"
 disk: "20GiB"
 
 mounts:

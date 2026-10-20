@@ -2,8 +2,8 @@ images:
   - location: "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-arm64.img"
     arch: "aarch64"
 
-cpus: 2
-memory: "4GiB"
+cpus: 3
+memory: "6GiB"
 disk: "20GiB"
 
 mounts:

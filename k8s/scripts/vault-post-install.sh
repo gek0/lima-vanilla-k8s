@@ -8,13 +8,13 @@ KEYS_FILE="${SCRIPT_DIR}/../../secrets/cluster-keys.json"
 
 section "Vault Initialization"
 
-info "Waiting for vault-0 to accept connections ..."
-until kubectl exec vault-0 -n vault -- vault status 2>/dev/null | grep -q "^Initialized"
+info "Waiting for vault-0 to be Running ..."
+until kubectl get pod vault-0 -n vault -o jsonpath='{.status.phase}' 2>/dev/null | grep -q "Running"
 do
-  warn "vault-0 not yet accepting connections — retrying in 5s ..."
+  warn "vault-0 not yet running — retrying in 5s ..."
   sleep 5
 done
-ok "vault-0 is accepting connections"
+ok "vault-0 is running"
 
 VAULT_INITIALIZED=$(kubectl exec vault-0 -n vault -- vault status 2>&1 | grep "^Initialized" | awk '{print $2}' || true)
 
@@ -56,13 +56,16 @@ do
 done
 
 section "Raft Cluster Stability"
-info "Waiting for Vault raft cluster to elect a stable leader ..."
-until kubectl exec vault-0 -n vault -- vault status 2>/dev/null | grep -qE "HA Mode\s+(active|standby)"
+info "Waiting for vault-1 and vault-2 to be Running before finding active pod ..."
+for pod in vault-1 vault-2
 do
-  warn "Leader election in progress — retrying in 5s ..."
-  sleep 5
+  until kubectl get pod "${pod}" -n vault -o jsonpath='{.status.phase}' 2>/dev/null | grep -q "Running"
+  do
+    warn "${pod} not yet running — retrying in 5s ..."
+    sleep 5
+  done
 done
-ok "Vault cluster has a stable leader"
+ok "All Vault pods running"
 
 info "Finding active Vault pod ..."
 VAULT_ACTIVE_POD=$(kubectl get pod -n vault -l vault-active=true -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "vault-0")
