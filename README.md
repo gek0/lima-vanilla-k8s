@@ -25,9 +25,25 @@ cd /root/k8s
 
 The script installs all components, creates an admin user, and merges the kubeconfig into `~/.kube/config` on master-1 node automatically.
 
----
 
-## What Gets Installed
+## Next steps
+
+- run `k8s/scripts/manifest-installer.sh` and select `argocd`
+    - after ArgoCD is installed, apply the `core` and `applications` manifests once (from `sample-k8s-argocd-bootstrap` repository) — ArgoCD reconciles them continuously from that point
+```bash
+# create projects
+kubectl apply -f k8s/manifests/argocd/sample-k8s-argocd-bootstrap/core/projects/
+
+# create app-of-apps ("root" application start syncing all other ones)
+kubectl apply -f k8s/manifests/argocd/sample-k8s-argocd-bootstrap/core/applications/
+```
+- once that is done proceed to Vault unseal and initial secrets configuration -> **prepare IAM User credentials at this step for Crossplane!**
+    - limit IAM user credentials at your will depeding on the resources you plan to provision (default needed: VPC + S3 R/W access)
+    - ` ./k8s/scripts/vault-post-install.sh`
+
+- verify installation in cluster and check next sections
+
+## Cluster components
 
 | Component | Notes |
 |---|---|
@@ -36,9 +52,30 @@ The script installs all components, creates an admin user, and merges the kubeco
 | [Istio](https://istio.io) | Ingress + `istioctl` |
 | [MetalLB](https://metallb.universe.tf) | L2 mode, pool `192.168.104.50–90` — update range in `k8s/components/metallb/configuration.yaml` |
 | [Local Path Provisioner](https://github.com/rancher/local-path-provisioner) | Dynamic PV via node filesystem |
-| [Crossplane](https://crossplane.io) | AWS infra provisioning — managed by ArgoCD (`argocd/crossplane/`) |
 
 All necessary binaries and tools (like `k9s`, `kubectl` and `argocd`, ...) are available on master-1 for in-cluster work. Check `node-definitions/scripts/master-provision.sh` for full setup.
+
+## ArgoCD-managed services
+
+Everything below is deployed and continuously reconciled by ArgoCD after the initial bootstrap. See `k8s/manifests/argocd/sample-k8s-gitops/` for all Application definitions.
+
+| Service | ArgoCD App | Notes |
+|---|---|---|
+| [Vault](https://www.vaultproject.io) | `vault` | HA Raft, 3 replicas — run `k8s/scripts/vault-post-install.sh` once after first sync |
+| Vault webapp | `vault-webapp` | Demo app reading secrets from Vault via Kubernetes auth |
+| [Grafana](https://grafana.com) | `kube-prometheus-stack` | admin / admin — Prometheus + Loki datasources pre-wired |
+| [Prometheus](https://prometheus.io) | `kube-prometheus-stack` | ClusterIP only — accessible via Grafana or `kubectl port-forward` |
+| [Loki](https://grafana.com/oss/loki/) | `loki-stack` | Log aggregation — ClusterIP only |
+| [External Secrets Operator](https://external-secrets.io) | `external-secrets` | Syncs secrets from Vault into K8s Secrets |
+| ESO Vault store | `eso-vault-store` | `ClusterSecretStore` wired to Vault via Kubernetes auth |
+| [Crossplane](https://crossplane.io) | `crossplane` | AWS infra provisioning |
+| Crossplane AWS providers | `crossplane-providers` | upbound provider-family-aws, provider-aws-s3, provider-aws-ec2 |
+| Crossplane devops-aws config | `crossplane-devops-aws-config` | ProviderConfig + ESO-synced credentials for devops team |
+| S3 buckets (dev + prod) | `crossplane-devops-aws` (AppSet) | Helm chart `charts/crossplane/aws/s3-bucket` — values in `services/crossplane/aws/devops/{env}/` — **manual sync only** |
+| VPC (dev only) | `crossplane-devops-aws` (AppSet) | Helm chart `charts/crossplane/aws/vpc` — **manual sync only** |
+| nginx HPA sample | `nginx-hpa` | Sample app with HPA from `sample-k8s-app` repo |
+
+> **Manual sync** — Applications marked as manual sync are created by ArgoCD but will show `OutOfSync` until explicitly triggered. This is intentional for cloud infrastructure resources (S3, VPC) to prevent accidental provisioning. Trigger with `argocd app sync <app-name>` or from the ArgoCD UI.
 
 ---
 
@@ -84,8 +121,6 @@ Three submodules under `k8s/manifests/argocd/` form the GitOps layer:
 git submodule update --init --recursive    # first-time init
 git submodule update --remote --recursive  # pull latest from all submodules
 ```
-
-After ArgoCD is installed, apply the `core` and `applications` manifests once (from `sample-k8s-argocd-bootstrap` repository) — ArgoCD reconciles them continuously from that point.
 
 ---
 
