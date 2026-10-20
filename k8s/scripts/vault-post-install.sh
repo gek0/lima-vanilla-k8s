@@ -8,13 +8,13 @@ KEYS_FILE="${SCRIPT_DIR}/../../secrets/cluster-keys.json"
 
 section "Vault Initialization"
 
-info "Waiting for vault-0 to be Running ..."
-until kubectl get pod vault-0 -n vault -o jsonpath='{.status.phase}' 2>/dev/null | grep -q "Running"
+info "Waiting for vault-0 to accept connections ..."
+until kubectl exec vault-0 -n vault -- vault status 2>/dev/null | grep -q "^Initialized"
 do
-  warn "vault-0 not yet running — retrying in 5s ..."
+  warn "vault-0 not yet accepting connections — retrying in 5s ..."
   sleep 5
 done
-ok "vault-0 is running"
+ok "vault-0 is accepting connections"
 
 VAULT_INITIALIZED=$(kubectl exec vault-0 -n vault -- vault status 2>&1 | grep "^Initialized" | awk '{print $2}' || true)
 
@@ -64,27 +64,31 @@ do
 done
 ok "Vault cluster has a stable leader"
 
+info "Finding active Vault pod ..."
+VAULT_ACTIVE_POD=$(kubectl get pod -n vault -l vault-active=true -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "vault-0")
+ok "Active pod: ${VAULT_ACTIVE_POD}"
+
 section "Vault Configuration"
-info "Logging into vault-0 ..."
-kubectl exec vault-0 -n vault -- vault login "$ROOT_TOKEN"
+info "Logging into ${VAULT_ACTIVE_POD} ..."
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault login "$ROOT_TOKEN"
 
 info "Enabling kv-v2 secrets engine ..."
-kubectl exec vault-0 -n vault -- sh -c 'vault secrets list | grep -q "^secret/" || vault secrets enable -path=secret kv-v2'
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- sh -c 'vault secrets list | grep -q "^secret/" || vault secrets enable -path=secret kv-v2'
 
 info "Enabling Kubernetes auth ..."
-kubectl exec vault-0 -n vault -- sh -c 'vault auth list | grep -q "^kubernetes/" || vault auth enable kubernetes'
-kubectl exec vault-0 -n vault -- sh -c 'vault write auth/kubernetes/config kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"'
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- sh -c 'vault auth list | grep -q "^kubernetes/" || vault auth enable kubernetes'
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- sh -c 'vault write auth/kubernetes/config kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"'
 ok "Kubernetes auth configured"
 
 section "Vault — Webapp"
-kubectl exec vault-0 -n vault -- sh -c 'vault policy write webapp - <<EOF
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- sh -c 'vault policy write webapp - <<EOF
 path "secret/data/webapp/config" {
   capabilities = ["read"]
 }
 EOF'
 ok "webapp policy created"
 
-kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/webapp \
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault write auth/kubernetes/role/webapp \
   bound_service_account_names=webapp \
   bound_service_account_namespaces=github-personal-vault-webapp \
   policies=webapp \
@@ -92,18 +96,18 @@ kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/webapp \
 ok "webapp Kubernetes auth role created"
 
 info "Creating placeholder webapp secret — update values after install ..."
-kubectl exec vault-0 -n vault -- vault kv put secret/webapp/config username="user" password="pass"
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault kv put secret/webapp/config username="user" password="pass"
 ok "webapp secret created at secret/webapp/config"
 
 section "Vault — ESO"
-kubectl exec vault-0 -n vault -- sh -c 'vault policy write eso - <<EOF
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- sh -c 'vault policy write eso - <<EOF
 path "secret/data/*" {
   capabilities = ["read"]
 }
 EOF'
 ok "ESO policy created"
 
-kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/eso \
+kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault write auth/kubernetes/role/eso \
   bound_service_account_names=eso-vault-auth \
   bound_service_account_namespaces=external-secrets \
   policies=eso \
@@ -111,7 +115,7 @@ kubectl exec vault-0 -n vault -- vault write auth/kubernetes/role/eso \
 ok "ESO Kubernetes auth role created"
 
 section "Vault — Crossplane AWS (devops-infra-aws)"
-if kubectl exec vault-0 -n vault -- vault kv get secret/crossplane/devops-aws &>/dev/null
+if kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault kv get secret/crossplane/devops-aws &>/dev/null
 then
   warn "secret/crossplane/devops-aws already exists — skipping"
 else
@@ -121,31 +125,31 @@ else
 
   info "Storing AWS credentials in Vault at secret/crossplane/devops-aws ..."
   CREDS_B64=$(printf '[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n' "$AWS_KEY_ID" "$AWS_SECRET_KEY" | base64 -w 0)
-  kubectl exec vault-0 -n vault -- sh -c "echo '${CREDS_B64}' | base64 -d > /tmp/aws-creds && vault kv put secret/crossplane/devops-aws credentials=@/tmp/aws-creds && rm /tmp/aws-creds"
+  kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- sh -c "echo '${CREDS_B64}' | base64 -d > /tmp/aws-creds && vault kv put secret/crossplane/devops-aws credentials=@/tmp/aws-creds && rm /tmp/aws-creds"
   ok "AWS credentials stored — ESO will sync to crossplane-creds-devops-aws in github-personal-crossplane-devops-aws"
 fi
 
 section "Vault — Keycloak OIDC Auth"
-if kubectl exec vault-0 -n vault -- vault auth list 2>/dev/null | grep -q "^oidc/"
+if kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault auth list 2>/dev/null | grep -q "^oidc/"
 then
   warn "Vault OIDC auth already configured — skipping"
 else
-  VAULT_OIDC_SECRET=$(kubectl exec vault-0 -n vault -- vault kv get -field=client_secret secret/keycloak/vault 2>/dev/null || true)
+  VAULT_OIDC_SECRET=$(kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault kv get -field=client_secret secret/keycloak/vault 2>/dev/null || true)
   if [[ -z "$VAULT_OIDC_SECRET" ]]
   then
     warn "secret/keycloak/vault not found — skipping Vault OIDC setup"
     warn "Run k8s/scripts/keycloak-post-install.sh first to create Keycloak clients and store secrets"
   else
     info "Enabling OIDC auth method ..."
-    kubectl exec vault-0 -n vault -- vault auth enable oidc
+    kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault auth enable oidc
 
-    kubectl exec vault-0 -n vault -- vault write auth/oidc/config \
+    kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault write auth/oidc/config \
       oidc_discovery_url="http://keycloak.local.io/realms/master" \
       oidc_client_id="vault" \
       oidc_client_secret="${VAULT_OIDC_SECRET}" \
       default_role="default"
 
-    kubectl exec vault-0 -n vault -- vault write auth/oidc/role/default \
+    kubectl exec "${VAULT_ACTIVE_POD}" -n vault -- vault write auth/oidc/role/default \
       bound_audiences="vault" \
       allowed_redirect_uris="http://vault.local.io/ui/vault/auth/oidc/oidc/callback" \
       user_claim="sub" \

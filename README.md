@@ -13,14 +13,13 @@ A fully-automated kubeadm cluster running on [Lima-VM](https://lima-vm.io) — t
 
 # 2. Join workers — master prints the kubeadm join command on first boot
 limactl shell master-1   # copy the join command
-limactl shell worker-1   # paste & run it (repeat for all workers)
+limactl shell worker-X -- <JOIN_COMMAND>   # paste & run it (repeat for all workers)
 
 # 3. Configure the cluster from master
 limactl shell master-1
 sudo -i
-cd /root/k8s
-./scripts/configure-cluster.sh          # full install
-./scripts/configure-cluster.sh --skip-install   # subsequent runs: skip component reinstall
+.k8s/scripts/configure-cluster.sh                  # full install
+.k8s/scripts/configure-cluster.sh --skip-install   # subsequent runs if needed: skip component reinstall
 ```
 
 The script installs all components, creates an admin user, and merges the kubeconfig into `~/.kube/config` on master-1 node automatically.
@@ -40,17 +39,17 @@ kubectl apply -f k8s/manifests/argocd/sample-k8s-argocd-bootstrap/core/applicati
 - once ArgoCD is syncing, wait for Vault to be healthy then run the post-install script — this initialises and unseals Vault, configures Kubernetes auth, sets up ESO and Crossplane roles, and prompts for AWS IAM credentials (needed for Crossplane S3/VPC provisioning)
     - limit IAM user credentials depending on the resources you plan to provision (default: VPC + S3 R/W access)
 ```bash
-k8s/scripts/vault-post-install.sh
+ ./k8s/scripts/vault-post-install.sh
 ```
 
 - wait for Keycloak to be healthy, then run the Keycloak post-install script — this creates OAuth clients for Grafana, ArgoCD and Vault, and stores their secrets in Vault so ESO can sync them automatically
 ```bash
-k8s/scripts/keycloak-post-install.sh
+ ./k8s/scripts/keycloak-post-install.sh
 ```
 
 - re-run the Vault post-install script to activate Vault OIDC login via Keycloak (skipped on first run if Keycloak was not ready yet)
 ```bash
-k8s/scripts/vault-post-install.sh
+ ./k8s/scripts/vault-post-install.sh
 ```
 
 - verify installation in cluster and check the sections below
